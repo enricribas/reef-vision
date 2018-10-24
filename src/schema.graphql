@@ -1,342 +1,4280 @@
 # import * from "./generated/prisma.graphql"
 
-type Query {
-  topExperiences: [Experience!]!
-  topHomes: [Place!]!
-  homesInPriceRange(min: Int!, max: Int!): [Place!]!
-  topReservations: [Reservation!]!
-  featuredDestinations: [Neighbourhood!]!
-  experiencesByCity(cities: [String!]!): [ExperiencesByCity!]!
-  viewer: Viewer
-  myLocation: Location
-}
-
-type Mutation {
-  # Authentication
-  signup(
-    email: String!
-    password: String!
-    firstName: String!
-    lastName: String!
-    phone: String!
-  ): AuthPayload!
-  login(email: String!, password: String!): AuthPayload!
-  # Payments
-  addPaymentMethod(
-    cardNumber: String!
-    expiresOnMonth: Int!
-    expiresOnYear: Int!
-    securityCode: String!
-    firstName: String!
-    lastName: String!
-    postalCode: String!
-    country: String!
-  ): MutationResult!
-  # Booking
-  book(
-    placeId: ID!
-    checkIn: String!
-    checkOut: String!
-    numGuests: Int!
-  ): MutationResult!
-}
-
-type Subscription {
-  city: CitySubscriptionPayload
-}
-
-type Viewer {
-  me: User!
-  bookings: [Booking!]!
-}
-
-type AuthPayload {
-  token: String!
-  user: User!
-}
-
-type MutationResult {
-  success: Boolean!
-}
-
-type ExperiencesByCity {
-  experiences: [Experience!]!
-  city: City!
-}
-
-type Reservation {
+"""
+A unique record for each type of asset, liability, equity, income and expense. Used as part of a Chart of Accounts.
+"""
+type Account implements BusinessNode {
+  """
+  The unique identifier for the account.
+  """
   id: ID!
-  title: String!
-  avgPricePerPerson: Int!
-  pictures: [Picture!]!
-  location: Location!
-  isCurated: Boolean!
-  slug: String!
-  popularity: Int!
-}
 
-type Experience {
-  id: ID!
-  category: ExperienceCategory
-  title: String!
-  location: Location!
-  pricePerPerson: Int!
-  reviews: [Review!]!
-  preview: Picture!
-  popularity: Int!
-}
+  """
+  The primary key used internally at Wave.
+  """
+  internalId: String
+    @deprecated(
+      reason: "Exposed internal IDs will eventually be removed in favor of global ID. Use Node.id instead."
+    )
 
-type Review {
-  accuracy: Int!
-  checkIn: Int!
-  cleanliness: Int!
-  communication: Int!
-  createdAt: DateTime!
-  id: ID!
-  location: Int!
-  stars: Int!
-  text: String!
-  value: Int!
-}
+  """
+  Business that the object belongs to.
+  """
+  business: Business!
 
-type Neighbourhood {
-  id: ID!
-  name: String!
-  slug: String!
-  homePreview: Picture
-  city: City!
-  featured: Boolean!
-  popularity: Int!
-}
+  """
+  Currency of the account.
+  """
+  currency: Currency
 
-type Location {
-  id: ID!
-  lat: Float!
-  lng: Float!
-  address: String!
-  directions: String!
-}
+  """
+  User defined description for the account.
+  """
+  description: String
 
-type Picture {
-  id: ID!
-  url: String!
-}
+  """
+  User defined id for the account.
+  """
+  displayId: String
 
-type City {
-  id: ID!
-  name: String!
-}
-
-type ExperienceCategory {
-  id: ID!
-  mainColor: String!
-  name: String!
-  experience: Experience
-}
-
-type User {
-  bookings: [Booking!]
-  createdAt: DateTime!
-  email: String!
-  firstName: String!
-  hostingExperiences: [Experience!]
-  id: ID!
-  isSuperHost: Boolean!
-  lastName: String!
-  location: Location
-  notifications: [Notification!]
-  ownedPlaces: [Place!]
-  paymentAccount: [PaymentAccount]
-  phone: String!
-  profilePicture: Picture
-  receivedMessages: [Message!]
-  responseRate: Float
-  responseTime: Int
-  sentMessages: [Message!]
-  updatedAt: DateTime!
-}
-
-type PaymentAccount {
-  id: ID!
-  createdAt: DateTime!
-  type: PAYMENT_PROVIDER
-  user: User!
-  payments: [Payment!]!
-  paypal: PaypalInformation
-  creditcard: CreditCardInformation
-}
-
-type Place {
-  id: ID!
+  """
+  Name of the account.
+  """
   name: String
-  size: PLACE_SIZES
-  shortDescription: String!
+
+  """
+  Account type.
+  """
+  type: AccountType
+
+  """
+  The account sub-type classification based on type.
+  """
+  subtype: AccountSubtype
+
+  """
+  Credit or Debit.
+  """
+  normalBalanceType: AccountNormalBalanceType
+
+  """
+  Indicates whether the account is hidden from view by default.
+  """
+  isArchived: Boolean
+
+  """
+  Numerically increasing version, each representing a revision of account data.
+  As soon as something modifies an account, its sequence is incremented.
+  """
+  sequence: Int
+}
+
+"""
+Account connection.
+"""
+type AccountConnection {
+  """
+  List of accounts from the Chart of Accounts.
+  """
+  edges: [AccountEdge!]
+
+  """
+  Information about pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Account edge.
+"""
+type AccountEdge {
+  """
+  An account from the Chart of Accounts.
+  """
+  node: Account
+}
+
+"""
+Account balance type.
+"""
+enum AccountNormalBalanceType {
+  """
+  Credit
+  """
+  CREDIT
+
+  """
+  Debit
+  """
+  DEBIT
+}
+
+"""
+Account subtype.
+"""
+type AccountSubtype {
+  """
+  Account subtype name.
+  """
+  name: String
+
+  """
+  Account subtype value.
+  """
+  value: AccountSubtypeValue
+}
+
+"""
+Subtypes of accounts, as used in the Chart of Accounts.
+"""
+enum AccountSubtypeValue {
+  """
+  Cash & Bank
+  """
+  CASH_AND_BANK
+
+  """
+  Cost of Goods Sold
+  """
+  COST_OF_GOODS_SOLD
+
+  """
+  Credit Card
+  """
+  CREDIT_CARD
+
+  """
+  Customer Prepayments and Customer Credits
+  """
+  CUSTOMER_PREPAYMENTS_AND_CREDITS
+
+  """
+  Depreciation and Amortization
+  """
+  DEPRECIATION_AND_AMORTIZATION
+
+  """
+  Discount
+  """
+  DISCOUNTS
+
+  """
+  Due For Payroll
+  """
+  DUE_FOR_PAYROLL
+
+  """
+  Due to You and Other Business Owners
+  """
+  DUE_TO_YOU_AND_OTHER_OWNERS
+
+  """
+  Expense
+  """
+  EXPENSE
+
+  """
+  Gain on Foreign Exchange
+  """
+  GAIN_ON_FOREIGN_EXCHANGE
+
+  """
+  Income
+  """
+  INCOME
+
+  """
+  Inventory
+  """
+  INVENTORY
+
+  """
+  Loan and Line of Credit
+  """
+  LOANS
+
+  """
+  Loss on Foreign Exchange
+  """
+  LOSS_ON_FOREIGN_EXCHANGE
+
+  """
+  Money in Transit
+  """
+  MONEY_IN_TRANSIT
+
+  """
+  Business Owner Contribution
+  """
+  NON_RETAINED_EARNINGS
+
+  """
+  Other Short-Term Asset
+  """
+  OTHER_CURRENT_ASSETS
+
+  """
+  Other Short-Term Liability
+  """
+  OTHER_CURRENT_LIABILITY
+
+  """
+  Other Income
+  """
+  OTHER_INCOME
+
+  """
+  Other Long-Term Asset
+  """
+  OTHER_LONG_TERM_ASSETS
+
+  """
+  Other Long-Term Liability
+  """
+  OTHER_LONG_TERM_LIABILITY
+
+  """
+  Payable
+  """
+  PAYABLE
+
+  """
+  System Payable Bill
+  """
+  PAYABLE_BILLS
+
+  """
+  System Payable Non-Bill
+  """
+  PAYABLE_OTHER
+
+  """
+  Payment Processing Fee
+  """
+  PAYMENT_PROCESSING_FEES
+
+  """
+  Payroll Expense
+  """
+  PAYROLL_EXPENSES
+
+  """
+  Property, Plant, Equipment
+  """
+  PROPERTY_PLANT_EQUIPMENT
+
+  """
+  Receivable
+  """
+  RECEIVABLE
+
+  """
+  System Receivable Invoice
+  """
+  RECEIVABLE_INVOICES
+
+  """
+  System Receivable Non-Invoice
+  """
+  RECEIVABLE_OTHER
+
+  """
+  Retained Earnings: Profit and Business Owner Drawing
+  """
+  RETAINED_EARNINGS
+
+  """
+  Sales Tax on Sales and Purchases
+  """
+  SALES_TAX
+
+  """
+  Transfers
+  """
+  TRANSFERS
+
+  """
+  Uncategorized Expense
+  """
+  UNCATEGORIZED_EXPENSE
+
+  """
+  Uncategorized Income
+  """
+  UNCATEGORIZED_INCOME
+
+  """
+  Vendor Prepayments and Vendor Credits
+  """
+  VENDOR_PREPAYMENTS_AND_CREDITS
+}
+
+"""
+Account type.
+"""
+type AccountType {
+  """
+  Account type name.
+  """
+  name: String
+
+  """
+  Normal balance type of the account type
+  """
+  normalBalanceType: AccountNormalBalanceType
+
+  """
+  Account type value.
+  """
+  value: AccountTypeValue
+}
+
+"""
+Types of accounts, as used in the Chart of Accounts.
+"""
+enum AccountTypeValue {
+  """
+  Represents the different types of economic resources owned or controlled by an entity.
+  """
+  ASSET
+
+  """
+  Represents the residual equity of an entity.
+  """
+  EQUITY
+
+  """
+  Represents the business's expenditures.
+  """
+  EXPENSE
+
+  """
+  Represents the business's earnings.
+  """
+  INCOME
+
+  """
+  Represents the different types of economic obligations of an entity.
+  """
+  LIABILITY
+}
+
+"""
+An address.
+"""
+type Address {
+  """
+  Address line 1 (Street address/PO Box/Company name).
+  """
+  addressLine1: String
+
+  """
+  Address line 2 (Apartment/Suite/Unit/Building).
+  """
+  addressLine2: String
+
+  """
+  City/District/Suburb/Town/Village.
+  """
+  city: String
+
+  """
+  State/County/Province/Region.
+  """
+  province: Province
+
+  """
+  Country.
+  """
+  country: Country
+
+  """
+  Zip/Postal Code.
+  """
+  postalCode: String
+}
+
+"""
+An organization and legal entity made up of an association of people.
+"""
+type Business implements Node {
+  """
+  The unique identifier for the business.
+  """
+  id: ID!
+
+  """
+  The primary key used internally at Wave.
+  """
+  internalId: String
+    @deprecated(
+      reason: "Exposed internal IDs will eventually be removed in favor of global ID. Use Node.id instead."
+    )
+
+  """
+  The name of the business.
+  """
+  name: String
+
+  """
+  When the business was created.
+  """
+  createdAt: DateTime
+
+  """
+  When the business was last modified.
+  """
+  modifiedAt: DateTime
+
+  """
+  Is the business hidden from view by default.
+  """
+  isArchived: Boolean
+
+  """
+  The organization type of the business.
+  """
+  organizationalType: OrganizationalType
+
+  """
+  The type of the business.
+  """
+  type: BusinessType
+
+  """
+  The subtype of the business.
+  """
+  subtype: BusinessSubtype
+
+  """
+  The currency of the business.
+  """
+  currency: Currency
+
+  """
+  The address of the business.
+  """
+  address: Address
+
+  """
+  The phone number of the business.
+  """
+  phone: String
+
+  """
+  The fax number of the business.
+  """
+  fax: String
+
+  """
+  The mobile/cell number of the business.
+  """
+  mobile: String
+
+  """
+  The toll free number of the business.
+  """
+  tollFree: String
+
+  """
+  The website of the business.
+  """
+  website: String
+
+  """
+  List of customers for the business.
+  """
+  customers(
+    email: String
+    page: Int = 1
+    pageSize: Int = 45
+  ): CustomerConnection
+
+  """
+  Chart of Accounts for the business.
+  """
+  accounts(
+    page: Int = 1
+    pageSize: Int = 45
+    type: AccountTypeValue
+    subtype: AccountSubtypeValue
+  ): AccountConnection
+
+  """
+  Users with access to the business.
+  """
+  users: UserConnection
+
+  """
+  Pending user invitations sent by the business.
+  """
+  pendingInvitations: BusinessInvitationConnection
+}
+
+"""
+Business connection.
+"""
+type BusinessConnection {
+  """
+  List of businesses.
+  """
+  edges: [BusinessEdge!]
+
+  """
+  Information about pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Business edge.
+"""
+type BusinessEdge {
+  """
+  A business.
+  """
+  node: Business
+}
+
+"""
+Invitation to become a user on a certain business.
+"""
+type BusinessInvitation implements BusinessNode {
+  """
+  The id of the invitation.
+  """
+  id: ID!
+
+  """
+  Business that the object belongs to.
+  """
+  business: Business!
+
+  """
+  The email the invitation was sent to.
+  """
+  email: String
+
+  """
+  The status of this invitation.
+  """
+  status: BusinessInvitationStatus
+
+  """
+  The date of when the invitation was sent.
+  """
+  sentAt: DateTime
+
+  """
+  The BusinessPermission that this invitation grants.
+  """
+  permission: BusinessPermission
+
+  """
+  The first name of the invitee.
+  """
+  firstName: String
+
+  """
+  The last name of the invitee.
+  """
+  lastName: String
+
+  """
+  The job title of the invitee.
+  """
+  jobTitle: String
+
+  """
+  Invitation key for this invitation.
+  """
+  invitationKey: String
+}
+
+"""
+BusinessInvitation connection.
+"""
+type BusinessInvitationConnection {
+  """
+  List of invitations sent by the business.
+  """
+  edges: [BusinessInvitationEdge!]
+}
+
+"""
+BusinessInvitation edge.
+"""
+type BusinessInvitationEdge {
+  """
+  An invitation sent by the business.
+  """
+  node: BusinessInvitation
+}
+
+"""
+Permissions that can be granted on a business.
+"""
+enum BusinessInvitationStatus {
+  """
+  Invitation has been accepted
+  """
+  ACCEPTED
+
+  """
+  Invitation is not valid or has expired
+  """
+  INVALID
+
+  """
+  Invitation is pending to be accepted
+  """
+  PENDING
+}
+
+"""
+An object belonging to a business with an ID.
+"""
+interface BusinessNode {
+  """
+  ID of the object.
+  """
+  id: ID!
+
+  """
+  Business that the object belongs to
+  """
+  business: Business!
+}
+
+"""
+Permissions that can be granted on a business.
+"""
+enum BusinessPermission {
+  """
+  View and edit permission
+  """
+  EDIT
+
+  """
+  All permissions on a business
+  """
+  OWNER
+
+  """
+  View, edit, and send permission
+  """
+  SEND
+
+  """
+  View only permission
+  """
+  VIEW
+}
+
+"""
+"Granular area of focus of a business."
+"""
+type BusinessSubtype {
+  """
+  The description of the business subtype in human-friendly form.
+  """
+  name: String!
+
+  """
+  The enum value of the business subtype.
+  """
+  value: BusinessSubtypeValue!
+}
+
+"""
+Granular area of focus of a business.
+"""
+enum BusinessSubtypeValue {
+  """
+  Advertising, Public Relations
+  """
+  ADVERTISING_PUBLIC_RELATIONS
+
+  """
+  Agriculture, Ranching and Farming
+  """
+  AGRICULTURE_RANCHING_FARMING
+
+  """
+  Actor
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__ACTOR
+
+  """
+  Craftsperson
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__CRAFTSPERSON
+
+  """
+  Dancer, Choreographer
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__DANCER_CHOREOG
+
+  """
+  Musician
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__MUSICIAN
+
+  """
+  Other Creative
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__OTHER
+
+  """
+  Photographer
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__PHOTOGRAPHER
+
+  """
+  Visual Artist
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE__VISUAL_ARTIST
+
+  """
+  Automotive Repair & Sales
+  """
+  AUTOMOTIVE_SALES_AND_REPAIR
+
+  """
+  Church, Religious Organization
+  """
+  CHURCH_RELIGIOUS_ORGANIZATION
+
+  """
+  Contractor
+  """
+  CONSTRUCTION_HOME_IMPROVEMENT__CONTRACTOR
+
+  """
+  Engineer
+  """
+  CONSTRUCTION_HOME_IMPROVEMENT__ENGINEER
+
+  """
+  Home Inspector
+  """
+  CONSTRUCTION_HOME_IMPROVEMENT__HOME_INSPECTOR
+
+  """
+  Trade
+  """
+  CONSTRUCTION_HOME_IMPROVEMENT__OTHER_TRADES
+
+  """
+  Accountant, Bookkeeper
+  """
+  CONSULTANTS_PROFESSIONALS__ACCOUNTANTS_BOOKKEEPERS
+
+  """
+  Communications, Marketing, PR
+  """
+  CONSULTANTS_PROFESSIONALS__COMMUNICATIONS
+
+  """
+  Executive Coach
+  """
+  CONSULTANTS_PROFESSIONALS__EXECUTIVE_COACH
+
+  """
+  IT, Technical
+  """
+  CONSULTANTS_PROFESSIONALS__IT_TECHNICAL
+
+  """
+  Other Consultant
+  """
+  CONSULTANTS_PROFESSIONALS__OTHER
+
+  """
+  Sales
+  """
+  CONSULTANTS_PROFESSIONALS__SALES
+
+  """
+  Design, Architecture, Engineering
+  """
+  DESIGN_ARCHITECTURE_ENGINEERING
+
+  """
+  Other Financial Service
+  """
+  FINANCIAL_SERVICES
+
+  """
+  Salon, Spa
+  """
+  HAIR_SPA_AESTHETICS__HAIR_SALON
+
+  """
+  Massage
+  """
+  HAIR_SPA_AESTHETICS__MASSAGE
+
+  """
+  Nails, Skin, Aesthetics
+  """
+  HAIR_SPA_AESTHETICS__NAIL_SKIN_AESTHETICS
+
+  """
+  Other Aesthetics/Spa
+  """
+  HAIR_SPA_AESTHETICS__OTHER
+
+  """
+  Insurance Agency, Broker
+  """
+  INSURANCE_AGENCY_BROKER
+
+  """
+  Landlord
+  """
+  LANDLORD_PROPERTY_MANAGER__LANDLORD
+
+  """
+  Property Manager
+  """
+  LANDLORD_PROPERTY_MANAGER__PROPERTY_MANAGER
+
+  """
+  Lawn Care, Landscaping
+  """
+  LAWN_CARE_LANDSCAPING
+
+  """
+  Legal Services
+  """
+  LEGAL_SERVICES
+
+  """
+  Lodging, Hotel, Motel
+  """
+  LODGING_HOTEL_MOTEL
+
+  """
+  Manufacturing Representative, Agent
+  """
+  MANUFACTURER_REPRESENTATIVE_AGENT
+
+  """
+  Chiropractor
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__CHIROPRACTOR
+
+  """
+  Dentist
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__DENTIST
+
+  """
+  Massage Therapist
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__MASSAGE_THERAPIST
+
+  """
+  Mental Health
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__MENTAL_HEALTH
+
+  """
+  Occupational Therapist
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__OCCUP_THERAPIST
+
+  """
+  Other Health
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__OTHER
+
+  """
+  Physical Therapist
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE__PHYSICAL_THERAPIST
+
+  """
+  Association
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__ASSOCIATION
+
+  """
+  Charity
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__CHARITABLE
+
+  """
+  Club
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__CLUB
+
+  """
+  Condo
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__CONDO
+
+  """
+  Other Non-Profit
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__OTHER
+
+  """
+  Parent Booster USA
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS__PARENT_BOOSTER
+
+  """
+  Manufacturer
+  """
+  PRODUCT_PROVIDER__MANUFACTURER
+
+  """
+  Manufacturer and Vendor
+  """
+  PRODUCT_PROVIDER__MANUFACTURER_AND_VENDOR
+
+  """
+  Other Product-based Business
+  """
+  PRODUCT_PROVIDER__OTHER
+
+  """
+  Vendor
+  """
+  PRODUCT_PROVIDER__VENDOR
+
+  """
+  Real Estate Agent
+  """
+  REAL_ESTATE_SALES__AGENT
+
+  """
+  Real Estate Broker
+  """
+  REAL_ESTATE_SALES__BROKER
+
+  """
+  Other Real Estate
+  """
+  REAL_ESTATE_SALES__OTHER
+
+  """
+  Real Estate Rental
+  """
+  RENTAL
+
+  """
+  Repairs/Maintenance
+  """
+  REPAIR_AND_MAINTENANCE
+
+  """
+  Restaurant, Caterer, Bar
+  """
+  RESTAURANT_CATERER_BAR
+
+  """
+  eBay Resellers
+  """
+  RETAILERS_AND_RESELLERS__EBAY
+
+  """
+  Etsy Vendors
+  """
+  RETAILERS_AND_RESELLERS__ETSY
+
+  """
+  Non-Store Retailers
+  """
+  RETAILERS_AND_RESELLERS__NON_STORE_RETAILER
+
+  """
+  Other Retailers
+  """
+  RETAILERS_AND_RESELLERS__OTHER
+
+  """
+  Store Retailers
+  """
+  RETAILERS_AND_RESELLERS__STORE_RETAILER
+
+  """
+  Sales: Independent Agent
+  """
+  SALES_INDEPENDENT_AGENT
+
+  """
+  Customer Service/Support
+  """
+  SERVICE_PROVIDER__CUSTOMER_SERVICE_SUPPORT
+
+  """
+  Household Employer
+  """
+  SERVICE_PROVIDER__DOMESTIC_CAREGIVER_EMPLOYER
+
+  """
+  Office Admin/Support
+  """
+  SERVICE_PROVIDER__OFFICE_ADMIN_SUPPORT
+
+  """
+  Other Service-based Business
+  """
+  SERVICE_PROVIDER__OTHER
+
+  """
+  Personal Care
+  """
+  SERVICE_PROVIDER__PERSONAL_CARE
+
+  """
+  Telemarketing
+  """
+  SERVICE_PROVIDER__TELEMARKETING
+
+  """
+  Transcription
+  """
+  SERVICE_PROVIDER__TRANSCRIPTION
+
+  """
+  Transportation, Trucking, Deliver
+  """
+  TRANSPORTATION_TRUCKING_DELIVERY
+
+  """
+  Designer
+  """
+  WEB_MEDIA_FREELANCER__DESIGNER
+
+  """
+  Marketing, Social Media
+  """
+  WEB_MEDIA_FREELANCER__MARKETING_SOCIAL_MEDIA
+
+  """
+  Other Media/Tech
+  """
+  WEB_MEDIA_FREELANCER__OTHER
+
+  """
+  Programmer
+  """
+  WEB_MEDIA_FREELANCER__PROGRAMMER
+
+  """
+  SEO
+  """
+  WEB_MEDIA_FREELANCER__SEO
+
+  """
+  Writer
+  """
+  WEB_MEDIA_FREELANCER__WRITER
+
+  """
+  Wholesale Distribution and Sales
+  """
+  WHOLESALE_DISTRIBUTION_SALES
+}
+
+"""
+"Area of focus of a business."
+"""
+type BusinessType {
+  """
+  The description of the business type in human-friendly form.
+  """
+  name: String!
+
+  """
+  The enum value of the business type.
+  """
+  value: BusinessTypeValue!
+}
+
+"""
+Area of focus of a business.
+"""
+enum BusinessTypeValue {
+  """
+  Artists, Photographers & Creative Types
+  """
+  ARTISTS_PHOTOGRAPHERS_CREATIVE
+
+  """
+  Consultants & Professionals
+  """
+  CONSULTANTS_PROFESSIONALS
+
+  """
+  Financial Services
+  """
+  FINANCE_INSURANCE
+
+  """
+  Hair, Spa & Aesthetics
+  """
+  HAIR_SPA_AESTHETICS
+
+  """
+  Medical, Dental, Health
+  """
+  MEDICAL_DENTAL_HEALTH_SERVICE
+
+  """
+  Non-profits, Associations & Groups
+  """
+  NONPROFIT_ASSOCIATIONS_GROUPS
+
+  """
+  General: I make or sell a PRODUCT
+  """
+  PRODUCT_PROVIDER
+
+  """
+  Real Estate, Construction & Home Improvement
+  """
+  REALESTATE_HOME
+
+  """
+  Retailers, Resellers & Sales
+  """
+  RETAILERS_AND_RESELLERS
+
+  """
+  General: I provide a SERVICE
+  """
+  SERVICE_PROVIDER
+
+  """
+  Web, Tech & Media
+  """
+  WEB_MEDIA_FREELANCER
+}
+
+"""
+A country.
+"""
+type Country {
+  """
+  Country code.
+  """
+  code: CountryCode!
+
+  """
+  Plain-language representation.
+  """
+  name: String!
+
+  """
+  Name of the country with the appropriate article.
+  """
+  nameWithArticle: String!
+}
+
+"""
+Country codes (ISO 3166-1 alpha-2).
+"""
+enum CountryCode {
+  """
+  Andorra
+  """
+  AD
+
+  """
+  United Arab Emirates
+  """
+  AE
+
+  """
+  Afghanistan
+  """
+  AF
+
+  """
+  Antigua and Barbuda
+  """
+  AG
+
+  """
+  Anguilla
+  """
+  AI
+
+  """
+  Albania
+  """
+  AL
+
+  """
+  Armenia
+  """
+  AM
+
+  """
+  Angola
+  """
+  AO
+
+  """
+  Antarctica
+  """
+  AQ
+
+  """
+  Argentina
+  """
+  AR
+
+  """
+  American Samoa
+  """
+  AS
+
+  """
+  Austria
+  """
+  AT
+
+  """
+  Australia
+  """
+  AU
+
+  """
+  Aruba
+  """
+  AW
+
+  """
+  Åland Islands
+  """
+  AX
+
+  """
+  Azerbaijan
+  """
+  AZ
+
+  """
+  Bosnia and Herzegovina
+  """
+  BA
+
+  """
+  Barbados
+  """
+  BB
+
+  """
+  Bangladesh
+  """
+  BD
+
+  """
+  Belgium
+  """
+  BE
+
+  """
+  Burkina Faso
+  """
+  BF
+
+  """
+  Bulgaria
+  """
+  BG
+
+  """
+  Bahrain
+  """
+  BH
+
+  """
+  Burundi
+  """
+  BI
+
+  """
+  Benin
+  """
+  BJ
+
+  """
+  Saint Barthélemy
+  """
+  BL
+
+  """
+  Bermuda
+  """
+  BM
+
+  """
+  Brunei Darussalam
+  """
+  BN
+
+  """
+  Bolivia, Plurinational State of
+  """
+  BO
+
+  """
+  Bonaire, Sint Eustatius and Saba
+  """
+  BQ
+
+  """
+  Brazil
+  """
+  BR
+
+  """
+  Bahamas
+  """
+  BS
+
+  """
+  Bhutan
+  """
+  BT
+
+  """
+  Bouvet Island
+  """
+  BV
+
+  """
+  Botswana
+  """
+  BW
+
+  """
+  Belarus
+  """
+  BY
+
+  """
+  Belize
+  """
+  BZ
+
+  """
+  Canada
+  """
+  CA
+
+  """
+  Cocos (Keeling) Islands
+  """
+  CC
+
+  """
+  Congo, The Democratic Republic of the
+  """
+  CD
+
+  """
+  Central African Republic
+  """
+  CF
+
+  """
+  Congo
+  """
+  CG
+
+  """
+  Switzerland
+  """
+  CH
+
+  """
+  Côte d'Ivoire
+  """
+  CI
+
+  """
+  Cook Islands
+  """
+  CK
+
+  """
+  Chile
+  """
+  CL
+
+  """
+  Cameroon
+  """
+  CM
+
+  """
+  China
+  """
+  CN
+
+  """
+  Colombia
+  """
+  CO
+
+  """
+  Costa Rica
+  """
+  CR
+
+  """
+  Cuba
+  """
+  CU
+
+  """
+  Cape Verde
+  """
+  CV
+
+  """
+  Curaçao
+  """
+  CW
+
+  """
+  Christmas Island
+  """
+  CX
+
+  """
+  Cyprus
+  """
+  CY
+
+  """
+  Czech Republic
+  """
+  CZ
+
+  """
+  Germany
+  """
+  DE
+
+  """
+  Djibouti
+  """
+  DJ
+
+  """
+  Denmark
+  """
+  DK
+
+  """
+  Dominica
+  """
+  DM
+
+  """
+  Dominican Republic
+  """
+  DO
+
+  """
+  Algeria
+  """
+  DZ
+
+  """
+  Ecuador
+  """
+  EC
+
+  """
+  Estonia
+  """
+  EE
+
+  """
+  Egypt
+  """
+  EG
+
+  """
+  Western Sahara
+  """
+  EH
+
+  """
+  Eritrea
+  """
+  ER
+
+  """
+  Spain
+  """
+  ES
+
+  """
+  Ethiopia
+  """
+  ET
+
+  """
+  Finland
+  """
+  FI
+
+  """
+  Fiji
+  """
+  FJ
+
+  """
+  Falkland Islands
+  """
+  FK
+
+  """
+  Micronesia, Federated States of
+  """
+  FM
+
+  """
+  Faroe Islands
+  """
+  FO
+
+  """
+  France
+  """
+  FR
+
+  """
+  Gabon
+  """
+  GA
+
+  """
+  United Kingdom
+  """
+  GB
+
+  """
+  Grenada
+  """
+  GD
+
+  """
+  Georgia
+  """
+  GE
+
+  """
+  French Guiana
+  """
+  GF
+
+  """
+  Guernsey
+  """
+  GG
+
+  """
+  Ghana
+  """
+  GH
+
+  """
+  Gibraltar
+  """
+  GI
+
+  """
+  Greenland
+  """
+  GL
+
+  """
+  Gambia
+  """
+  GM
+
+  """
+  Guinea
+  """
+  GN
+
+  """
+  Guadeloupe
+  """
+  GP
+
+  """
+  Equatorial Guinea
+  """
+  GQ
+
+  """
+  Greece
+  """
+  GR
+
+  """
+  South Georgia and the South Sandwich Islands
+  """
+  GS
+
+  """
+  Guatemala
+  """
+  GT
+
+  """
+  Guam
+  """
+  GU
+
+  """
+  Guinea-Bissau
+  """
+  GW
+
+  """
+  Guyana
+  """
+  GY
+
+  """
+  Hong Kong
+  """
+  HK
+
+  """
+  Heard Island and McDonald Islands
+  """
+  HM
+
+  """
+  Honduras
+  """
+  HN
+
+  """
+  Croatia
+  """
+  HR
+
+  """
+  Haiti
+  """
+  HT
+
+  """
+  Hungary
+  """
+  HU
+
+  """
+  Indonesia
+  """
+  ID
+
+  """
+  Ireland
+  """
+  IE
+
+  """
+  Israel
+  """
+  IL
+
+  """
+  Isle of Man
+  """
+  IM
+
+  """
+  India
+  """
+  IN
+
+  """
+  British Indian Ocean Territory
+  """
+  IO
+
+  """
+  Iraq
+  """
+  IQ
+
+  """
+  Iran
+  """
+  IR
+
+  """
+  Iceland
+  """
+  IS
+
+  """
+  Italy
+  """
+  IT
+
+  """
+  Jersey
+  """
+  JE
+
+  """
+  Jamaica
+  """
+  JM
+
+  """
+  Jordan
+  """
+  JO
+
+  """
+  Japan
+  """
+  JP
+
+  """
+  Kenya
+  """
+  KE
+
+  """
+  Kyrgyzstan
+  """
+  KG
+
+  """
+  Cambodia
+  """
+  KH
+
+  """
+  Kiribati
+  """
+  KI
+
+  """
+  Comoros
+  """
+  KM
+
+  """
+  Saint Kitts and Nevis
+  """
+  KN
+
+  """
+  Korea, Democratic People's Republic of
+  """
+  KP
+
+  """
+  Korea, Republic of
+  """
+  KR
+
+  """
+  Kuwait
+  """
+  KW
+
+  """
+  Cayman Islands
+  """
+  KY
+
+  """
+  Kazakhstan
+  """
+  KZ
+
+  """
+  Lao People's Democratic Republic
+  """
+  LA
+
+  """
+  Lebanon
+  """
+  LB
+
+  """
+  Saint Lucia
+  """
+  LC
+
+  """
+  Liechtenstein
+  """
+  LI
+
+  """
+  Sri Lanka
+  """
+  LK
+
+  """
+  Liberia
+  """
+  LR
+
+  """
+  Lesotho
+  """
+  LS
+
+  """
+  Lithuania
+  """
+  LT
+
+  """
+  Luxembourg
+  """
+  LU
+
+  """
+  Latvia
+  """
+  LV
+
+  """
+  Libya
+  """
+  LY
+
+  """
+  Morocco
+  """
+  MA
+
+  """
+  Monaco
+  """
+  MC
+
+  """
+  Moldova, Republic of
+  """
+  MD
+
+  """
+  Montenegro
+  """
+  ME
+
+  """
+  Saint Martin
+  """
+  MF
+
+  """
+  Madagascar
+  """
+  MG
+
+  """
+  Marshall Islands
+  """
+  MH
+
+  """
+  Macedonia, The former Yugoslav Republic of
+  """
+  MK
+
+  """
+  Mali
+  """
+  ML
+
+  """
+  Myanmar
+  """
+  MM
+
+  """
+  Mongolia
+  """
+  MN
+
+  """
+  Macao
+  """
+  MO
+
+  """
+  Northern Mariana Islands
+  """
+  MP
+
+  """
+  Martinique
+  """
+  MQ
+
+  """
+  Mauritania
+  """
+  MR
+
+  """
+  Montserrat
+  """
+  MS
+
+  """
+  Malta
+  """
+  MT
+
+  """
+  Mauritius
+  """
+  MU
+
+  """
+  Maldives
+  """
+  MV
+
+  """
+  Malawi
+  """
+  MW
+
+  """
+  Mexico
+  """
+  MX
+
+  """
+  Malaysia
+  """
+  MY
+
+  """
+  Mozambique
+  """
+  MZ
+
+  """
+  Namibia
+  """
+  NA
+
+  """
+  New Caledonia
+  """
+  NC
+
+  """
+  Niger
+  """
+  NE
+
+  """
+  Norfolk Island
+  """
+  NF
+
+  """
+  Nigeria
+  """
+  NG
+
+  """
+  Nicaragua
+  """
+  NI
+
+  """
+  Netherlands
+  """
+  NL
+
+  """
+  Norway
+  """
+  NO
+
+  """
+  Nepal
+  """
+  NP
+
+  """
+  Nauru
+  """
+  NR
+
+  """
+  Niue
+  """
+  NU
+
+  """
+  New Zealand
+  """
+  NZ
+
+  """
+  Oman
+  """
+  OM
+
+  """
+  Panama
+  """
+  PA
+
+  """
+  Peru
+  """
+  PE
+
+  """
+  French Polynesia
+  """
+  PF
+
+  """
+  Papua New Guinea
+  """
+  PG
+
+  """
+  Philippines
+  """
+  PH
+
+  """
+  Pakistan
+  """
+  PK
+
+  """
+  Poland
+  """
+  PL
+
+  """
+  Saint Pierre and Miquelon
+  """
+  PM
+
+  """
+  Pitcairn
+  """
+  PN
+
+  """
+  Puerto Rico
+  """
+  PR
+
+  """
+  Palestine
+  """
+  PS
+
+  """
+  Portugal
+  """
+  PT
+
+  """
+  Palau
+  """
+  PW
+
+  """
+  Paraguay
+  """
+  PY
+
+  """
+  Qatar
+  """
+  QA
+
+  """
+  Réunion
+  """
+  RE
+
+  """
+  Romania
+  """
+  RO
+
+  """
+  Serbia
+  """
+  RS
+
+  """
+  Russian Federation
+  """
+  RU
+
+  """
+  Rwanda
+  """
+  RW
+
+  """
+  Saudi Arabia
+  """
+  SA
+
+  """
+  Solomon Islands
+  """
+  SB
+
+  """
+  Seychelles
+  """
+  SC
+
+  """
+  Sudan
+  """
+  SD
+
+  """
+  Sweden
+  """
+  SE
+
+  """
+  Singapore
+  """
+  SG
+
+  """
+  Saint Helena, Ascension and Tristan da Cunha
+  """
+  SH
+
+  """
+  Slovenia
+  """
+  SI
+
+  """
+  Svalbard and Jan Mayen
+  """
+  SJ
+
+  """
+  Slovakia
+  """
+  SK
+
+  """
+  Sierra Leone
+  """
+  SL
+
+  """
+  San Marino
+  """
+  SM
+
+  """
+  Senegal
+  """
+  SN
+
+  """
+  Somalia
+  """
+  SO
+
+  """
+  Suriname
+  """
+  SR
+
+  """
+  South Sudan
+  """
+  SS
+
+  """
+  Sao Tome and Principe
+  """
+  ST
+
+  """
+  El Salvador
+  """
+  SV
+
+  """
+  Sint Maarten
+  """
+  SX
+
+  """
+  Syria
+  """
+  SY
+
+  """
+  Swaziland
+  """
+  SZ
+
+  """
+  Turks and Caicos Islands
+  """
+  TC
+
+  """
+  Chad
+  """
+  TD
+
+  """
+  French Southern Territories
+  """
+  TF
+
+  """
+  Togo
+  """
+  TG
+
+  """
+  Thailand
+  """
+  TH
+
+  """
+  Tajikistan
+  """
+  TJ
+
+  """
+  Tokelau
+  """
+  TK
+
+  """
+  Timor-Leste
+  """
+  TL
+
+  """
+  Turkmenistan
+  """
+  TM
+
+  """
+  Tunisia
+  """
+  TN
+
+  """
+  Tonga
+  """
+  TO
+
+  """
+  Turkey
+  """
+  TR
+
+  """
+  Trinidad and Tobago
+  """
+  TT
+
+  """
+  Tuvalu
+  """
+  TV
+
+  """
+  Taiwan
+  """
+  TW
+
+  """
+  Tanzania, United Republic of
+  """
+  TZ
+
+  """
+  Ukraine
+  """
+  UA
+
+  """
+  Uganda
+  """
+  UG
+
+  """
+  United States Minor Outlying Islands
+  """
+  UM
+
+  """
+  United States
+  """
+  US
+
+  """
+  Uruguay
+  """
+  UY
+
+  """
+  Uzbekistan
+  """
+  UZ
+
+  """
+  Holy See
+  """
+  VA
+
+  """
+  Saint Vincent and the Grenadines
+  """
+  VC
+
+  """
+  Venezuela, Bolivarian Republic of
+  """
+  VE
+
+  """
+  Virgin Islands (British)
+  """
+  VG
+
+  """
+  Virgin Islands (U.S)
+  """
+  VI
+
+  """
+  Viet Nam
+  """
+  VN
+
+  """
+  Vanuatu
+  """
+  VU
+
+  """
+  Wallis and Futuna
+  """
+  WF
+
+  """
+  Samoa
+  """
+  WS
+
+  """
+  Yemen
+  """
+  YE
+
+  """
+  Mayotte
+  """
+  YT
+
+  """
+  South Africa
+  """
+  ZA
+
+  """
+  Zambia
+  """
+  ZM
+
+  """
+  Zimbabwe
+  """
+  ZW
+}
+
+"""
+Input to the createBusiness mutation.
+"""
+input CreateBusinessInput {
+  """
+  Name of the business.
+  """
+  name: String!
+
+  """
+  Country of the business.
+  """
+  country: CountryCode!
+
+  """
+  Primary currency of the business.
+  """
+  currency: CurrencyCode!
+
+  """
+  Organizational type of the business.
+  """
+  organizationalType: OrganizationalType!
+
+  """
+  Enum value for the type of the business.
+  """
+  type: BusinessTypeValue!
+
+  """
+  Subtype of the business.
+  """
+  subtype: BusinessSubtypeValue!
+}
+
+"""
+Input to create an invitation to join a business.
+"""
+input CreateBusinessInvitationInput {
+  """
+  Id of the business.
+  """
+  businessId: ID!
+
+  """
+  Permission to grant.
+  """
+  permission: BusinessPermission!
+
+  """
+  The email of the user to send the invitation to.
+  """
+  emailAddress: String!
+
+  """
+  The subject of the email.
+  """
+  emailSubject: String
+
+  """
+  The message to send in the invite.
+  """
+  emailMessage: String
+
+  """
+  The first name of the user being invited.
+  """
+  firstName: String
+
+  """
+  The last name of the user being invited.
+  """
+  lastName: String
+
+  """
+  The job title of the user being invited.
+  """
+  jobTitle: String
+}
+
+"""
+Ouput from creating an invitation.
+"""
+type CreateBusinessInvitationOutput {
+  """
+  Boolean indicator of success.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+
+  """
+  Invitation object that was created.
+  """
+  invitation: BusinessInvitation
+}
+
+"""
+Output of the createBusiness mutation.
+"""
+type CreateBusinessOutput {
+  """
+  Business that was created.
+  """
+  business: Business
+
+  """
+  Indicates whether the business was successfully created.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+}
+
+"""
+Input of the createGeneralJournalTransaction Mutation
+"""
+input CreateGeneralJournalTransactionInput {
+  """
+  Id of the business.
+  """
+  businessId: ID!
+
+  """
+  Date of the transaction.
+  """
+  date: Date!
+
+  """
+  Description for the transaction.
+  """
   description: String!
-  slug: String!
-  maxGuests: Int!
-  numRatings: Int!
-  avgRating: Float
-  numBedrooms: Int!
-  numBeds: Int!
-  numBaths: Int!
-  reviews: [Review!]!
-  amenities: Amenities!
-  host: User!
-  pricing: Pricing!
-  location: Location!
-  views: PlaceViews!
-  guestRequirements: GuestRequirements
-  policies: Policies
-  houseRules: HouseRules
-  bookings: [Booking!]!
-  pictures: [Picture!]
-  popularity: Int!
+
+  """
+  Line items.
+  """
+  lineItems: [CreateGeneralJournalTransactionLineItemInput!]!
+
+  """
+  Origin of the transaction.
+  """
+  origin: TransactionOrigin!
+
+  """
+  ID of the transaction in an external system.
+  """
+  externalId: String
+
+  """
+  Transaction timestamp.
+  """
+  createdAt: DateTime
+
+  """
+  Extra notes about the transaction.
+  """
+  notes: String
 }
 
-type Booking {
+"""
+General Journal Line item input.
+"""
+input CreateGeneralJournalTransactionLineItemInput {
+  """
+  ID of the account associated with the line item.
+  """
+  accountId: ID!
+
+  """
+  Amount.
+  """
+  amount: Float!
+
+  """
+  Debit or Credit.
+  """
+  type: AccountNormalBalanceType!
+}
+
+"""
+Output of the create general journal transaction Mutation
+"""
+type CreateGeneralJournalTransactionOutput {
+  """
+  Whether or not the transaction was successfully created.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+}
+
+"""
+Input representing a deposit.
+"""
+input CreateMoneyDepositTransactionDepositInput {
+  """
+  Id of the account.
+  """
+  accountId: ID!
+
+  """
+  Date of the transaction.
+  """
+  amount: Float!
+}
+
+"""
+Fee input.
+"""
+input CreateMoneyDepositTransactionFeeInput {
+  """
+  ID of the account associated with the fee.
+  """
+  accountId: ID!
+
+  """
+  Amount.
+  """
+  amount: Float!
+}
+
+"""
+Input of the createMoneyDepositTransaction Mutation
+"""
+input CreateMoneyDepositTransactionInput {
+  """
+  Id of the business.
+  """
+  businessId: ID!
+
+  """
+  Date of the transaction.
+  """
+  date: Date!
+
+  """
+  Description for the transaction.
+  """
+  description: String!
+
+  """
+  Deposit account and amount.
+  """
+  deposit: CreateMoneyDepositTransactionDepositInput!
+
+  """
+  Line items.
+  """
+  lineItems: [CreateMoneyDepositTransactionLineItemInput!]!
+
+  """
+  Fees.
+  """
+  fees: [CreateMoneyDepositTransactionFeeInput!]
+
+  """
+  Origin of the transaction.
+  """
+  origin: TransactionOrigin!
+
+  """
+  ID of the transaction in an external system.
+  """
+  externalId: String
+
+  """
+  Transaction timestamp.
+  """
+  createdAt: DateTime
+
+  """
+  Extra notes about the transaction.
+  """
+  notes: String
+}
+
+"""
+Line item input.
+"""
+input CreateMoneyDepositTransactionLineItemInput {
+  """
+  ID of the account associated with the line item.
+  """
+  accountId: ID!
+
+  """
+  Amount.
+  """
+  amount: Float!
+
+  """
+  ID of the customer associated with the line item.
+  """
+  customerId: ID
+
+  """
+  Taxes applied to the line item.
+  """
+  taxes: [CreateTransactionSalesTaxInput!]!
+}
+
+"""
+Output of the create money deposit transaction Mutation
+"""
+type CreateMoneyDepositTransactionOutput {
+  """
+  Whether or not the transaction was successfully created.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+}
+
+"""
+Sales tax input.
+"""
+input CreateTransactionSalesTaxInput {
+  """
+  Tax Abbreviation.
+  """
+  abbreviation: String!
+
+  """
+  Tax Amount.
+  """
+  amount: Float!
+}
+
+"""
+A medium of exchange in common use.
+"""
+type Currency {
+  """
+  Currency code.
+  """
+  code: CurrencyCode!
+
+  """
+  Symbol used to denote that a number is a monetary value.
+  """
+  symbol: String!
+
+  """
+  Plain-language representation.
+  """
+  name: String!
+
+  """
+  Plural version of currency name.
+  """
+  plural: String!
+
+  """
+  Expresses the relationship between a major currency unit and its minor
+  currency unit. The number of digits found to the right of the decimal place to
+  represent the fractional part of this currency (assumes a base of 10).
+  """
+  exponent: Int!
+}
+
+"""
+Currency codes based on ISO 4217.
+"""
+enum CurrencyCode {
+  """
+  UAE dirham (AED)
+  """
+  AED
+
+  """
+  Afghani (AFN)
+  """
+  AFN
+
+  """
+  Lek (ALL)
+  """
+  ALL
+
+  """
+  Armenian dram (AMD)
+  """
+  AMD
+
+  """
+  Netherlands Antillean Guilder (ANG)
+  """
+  ANG
+
+  """
+  Kwanza (AOA)
+  """
+  AOA
+
+  """
+  Argentinian peso (ARS)
+  """
+  ARS
+
+  """
+  Australian dollar (AUD)
+  """
+  AUD
+
+  """
+  Aruban Guilder (AWG)
+  """
+  AWG
+
+  """
+  New Manat (AZN)
+  """
+  AZN
+
+  """
+  Convertible Marks (BAM)
+  """
+  BAM
+
+  """
+  Barbados dollar (BBD)
+  """
+  BBD
+
+  """
+  Taka (BDT)
+  """
+  BDT
+
+  """
+  Lev (BGN)
+  """
+  BGN
+
+  """
+  Bahraini dinar (BHD)
+  """
+  BHD
+
+  """
+  Burundi franc (BIF)
+  """
+  BIF
+
+  """
+  Bermuda dollar (BMD)
+  """
+  BMD
+
+  """
+  Brunei dollar (BND)
+  """
+  BND
+
+  """
+  Boliviano (BOB)
+  """
+  BOB
+
+  """
+  Real (BRL)
+  """
+  BRL
+
+  """
+  Bahamian dollar (BSD)
+  """
+  BSD
+
+  """
+  Ngultrum (BTN)
+  """
+  BTN
+
+  """
+  Pula (BWP)
+  """
+  BWP
+
+  """
+  Belarussian rouble (BYR)
+  """
+  BYR
+
+  """
+  Belize dollar (BZD)
+  """
+  BZD
+
+  """
+  Canadian dollar (CAD)
+  """
+  CAD
+
+  """
+  Franc congolais (CDF)
+  """
+  CDF
+
+  """
+  Swiss franc (CHF)
+  """
+  CHF
+
+  """
+  Chilean peso (CLP)
+  """
+  CLP
+
+  """
+  Ren-Min-Bi yuan (CNY)
+  """
+  CNY
+
+  """
+  Colombian peso (COP)
+  """
+  COP
+
+  """
+  Costa Rican colon (CRC)
+  """
+  CRC
+
+  """
+  Cuban peso (CUP)
+  """
+  CUP
+
+  """
+  Cape Verde escudo (CVE)
+  """
+  CVE
+
+  """
+  Czech koruna (CZK)
+  """
+  CZK
+
+  """
+  Djibouti franc (DJF)
+  """
+  DJF
+
+  """
+  Danish krone (DKK)
+  """
+  DKK
+
+  """
+  Dominican peso (DOP)
+  """
+  DOP
+
+  """
+  Algerian dinar (DZD)
+  """
+  DZD
+
+  """
+  Estonian kroon (EEK)
+  """
+  EEK
+
+  """
+  Egyptian pound (EGP)
+  """
+  EGP
+
+  """
+  Nakfa (ERN)
+  """
+  ERN
+
+  """
+  Ethiopian birr (ETB)
+  """
+  ETB
+
+  """
+  Euro (EUR)
+  """
+  EUR
+
+  """
+  Fiji dollar (FJD)
+  """
+  FJD
+
+  """
+  Falkland Islands (Malvinas) Pound (FKP)
+  """
+  FKP
+
+  """
+  Pound sterling (GBP)
+  """
+  GBP
+
+  """
+  Lari (GEL)
+  """
+  GEL
+
+  """
+  Ghana Cedi (GHS)
+  """
+  GHS
+
+  """
+  Gibraltar pound (GIP)
+  """
+  GIP
+
+  """
+  Dalasi (GMD)
+  """
+  GMD
+
+  """
+  Guinean franc (GNF)
+  """
+  GNF
+
+  """
+  Quetzal (GTQ)
+  """
+  GTQ
+
+  """
+  Guinean bissau Peso (GWP)
+  """
+  GWP
+
+  """
+  Guyana dollar (GYD)
+  """
+  GYD
+
+  """
+  Hong Kong dollar (HKD)
+  """
+  HKD
+
+  """
+  Lempira (HNL)
+  """
+  HNL
+
+  """
+  Kuna (HRK)
+  """
+  HRK
+
+  """
+  Haitian gourde (HTG)
+  """
+  HTG
+
+  """
+  Forint (HUF)
+  """
+  HUF
+
+  """
+  Rupiah (IDR)
+  """
+  IDR
+
+  """
+  New Israeli sheqel (ILS)
+  """
+  ILS
+
+  """
+  Indian rupee (INR)
+  """
+  INR
+
+  """
+  Iraqi dinar (IQD)
+  """
+  IQD
+
+  """
+  Iranian rial (IRR)
+  """
+  IRR
+
+  """
+  Icelandic Krona (ISK)
+  """
+  ISK
+
+  """
+  Jamaican dollar (JMD)
+  """
+  JMD
+
+  """
+  Jordanian dinar (JOD)
+  """
+  JOD
+
+  """
+  Yen (JPY)
+  """
+  JPY
+
+  """
+  Kenyan shilling (KES)
+  """
+  KES
+
+  """
+  Kyrgyz Som (KGS)
+  """
+  KGS
+
+  """
+  Riel (KHR)
+  """
+  KHR
+
+  """
+  Comoro franc (KMF)
+  """
+  KMF
+
+  """
+  Won (KRW)
+  """
+  KRW
+
+  """
+  Kuwaiti dinar (KWD)
+  """
+  KWD
+
+  """
+  Cayman Islands dollar (KYD)
+  """
+  KYD
+
+  """
+  Tenge (KZT)
+  """
+  KZT
+
+  """
+  Kip (LAK)
+  """
+  LAK
+
+  """
+  Lebanese pound (LBP)
+  """
+  LBP
+
+  """
+  Sri Lankan rupee (LKR)
+  """
+  LKR
+
+  """
+  Liberian dollar (LRD)
+  """
+  LRD
+
+  """
+  Loti (LSL)
+  """
+  LSL
+
+  """
+  Lithuanian litus (LTL)
+  """
+  LTL
+
+  """
+  Latvian lats (LVL)
+  """
+  LVL
+
+  """
+  Libyan dinar (LYD)
+  """
+  LYD
+
+  """
+  Moroccan dirham (MAD)
+  """
+  MAD
+
+  """
+  Moldovan leu (MDL)
+  """
+  MDL
+
+  """
+  Malagasy Ariary (MGA)
+  """
+  MGA
+
+  """
+  Denar (MKD)
+  """
+  MKD
+
+  """
+  Kyat (MMK)
+  """
+  MMK
+
+  """
+  Tugrik (MNT)
+  """
+  MNT
+
+  """
+  Pataca (MOP)
+  """
+  MOP
+
+  """
+  Ouguiya (MRO)
+  """
+  MRO
+
+  """
+  Mauritian rupee (MUR)
+  """
+  MUR
+
+  """
+  Rufiyaa (MVR)
+  """
+  MVR
+
+  """
+  Kwacha (MWK)
+  """
+  MWK
+
+  """
+  Mexican peso (MXN)
+  """
+  MXN
+
+  """
+  Malaysian ringgit (MYR)
+  """
+  MYR
+
+  """
+  Metical (MZN)
+  """
+  MZN
+
+  """
+  Namibian dollar (NAD)
+  """
+  NAD
+
+  """
+  Naira (NGN)
+  """
+  NGN
+
+  """
+  Cordoba Oro (NIO)
+  """
+  NIO
+
+  """
+  Norwegian krone (NOK)
+  """
+  NOK
+
+  """
+  Nepalese rupee (NPR)
+  """
+  NPR
+
+  """
+  New Zealand dollar (NZD)
+  """
+  NZD
+
+  """
+  Omani rial (OMR)
+  """
+  OMR
+
+  """
+  Balboa (PAB)
+  """
+  PAB
+
+  """
+  Nuevo Sol (PEN)
+  """
+  PEN
+
+  """
+  Kina (PGK)
+  """
+  PGK
+
+  """
+  Philippine peso (PHP)
+  """
+  PHP
+
+  """
+  Pakistani rupee (PKR)
+  """
+  PKR
+
+  """
+  Zloty (PLN)
+  """
+  PLN
+
+  """
+  Guarani (PYG)
+  """
+  PYG
+
+  """
+  Qatari riyal (QAR)
+  """
+  QAR
+
+  """
+  New Leu (RON)
+  """
+  RON
+
+  """
+  Serbian Dinar (RSD)
+  """
+  RSD
+
+  """
+  Russian rouble (RUB)
+  """
+  RUB
+
+  """
+  Rwanda franc (RWF)
+  """
+  RWF
+
+  """
+  Saudi riyal (SAR)
+  """
+  SAR
+
+  """
+  Solomon Islands Dollar (SBD)
+  """
+  SBD
+
+  """
+  Seychelles rupee (SCR)
+  """
+  SCR
+
+  """
+  Sudanese Pound (SDG)
+  """
+  SDG
+
+  """
+  Swedish Krona (SEK)
+  """
+  SEK
+
+  """
+  Singapore dollar (SGD)
+  """
+  SGD
+
+  """
+  Saint Helena Pound (SHP)
+  """
+  SHP
+
+  """
+  Leone (SLL)
+  """
+  SLL
+
+  """
+  Somali shilling (SOS)
+  """
+  SOS
+
+  """
+  Surinam dollar (SRD)
+  """
+  SRD
+
+  """
+  Dobra (STD)
+  """
+  STD
+
+  """
+  El Salvador colon (SVC)
+  """
+  SVC
+
+  """
+  Syrian pound (SYP)
+  """
+  SYP
+
+  """
+  Lilangeni (SZL)
+  """
+  SZL
+
+  """
+  Baht (THB)
+  """
+  THB
+
+  """
+  Somoni (TJS)
+  """
+  TJS
+
+  """
+  Manat (TMM)
+  """
+  TMM
+
+  """
+  Tunisian dinar (TND)
+  """
+  TND
+
+  """
+  Pa'anga (TOP)
+  """
+  TOP
+
+  """
+  Turkish Lira (TRY)
+  """
+  TRY
+
+  """
+  Trinidad and Tobago dollar (TTD)
+  """
+  TTD
+
+  """
+  Taiwan New Dollar (TWD)
+  """
+  TWD
+
+  """
+  Tanzanian shilling (TZS)
+  """
+  TZS
+
+  """
+  Hryvnia (UAH)
+  """
+  UAH
+
+  """
+  Ugandan shilling (UGX)
+  """
+  UGX
+
+  """
+  U.S. dollar (USD)
+  """
+  USD
+
+  """
+  Uruguayo peso (UYU)
+  """
+  UYU
+
+  """
+  Uzbekistan sum (UZS)
+  """
+  UZS
+
+  """
+  Bolivar Fuerte (VEF)
+  """
+  VEF
+
+  """
+  Dong (VND)
+  """
+  VND
+
+  """
+  Vatu (VUV)
+  """
+  VUV
+
+  """
+  Samoan Tala (WST)
+  """
+  WST
+
+  """
+  CFA Franc - BEAC (XAF)
+  """
+  XAF
+
+  """
+  Eastern Caribbean dollar (XCD)
+  """
+  XCD
+
+  """
+  CFA franc - BCEAO (XOF)
+  """
+  XOF
+
+  """
+  Comptoirs Francais du Pacifique Francs (XPF)
+  """
+  XPF
+
+  """
+  Yemeni rial (YER)
+  """
+  YER
+
+  """
+  Rand (ZAR)
+  """
+  ZAR
+
+  """
+  Kwacha (ZMK)
+  """
+  ZMK
+
+  """
+  Kwacha (ZMW)
+  """
+  ZMW
+
+  """
+  Zimbabwean dollar (ZWD)
+  """
+  ZWD
+}
+
+"""
+A customer of the business
+"""
+type Customer implements BusinessNode {
+  """
+  Unique identifier for the customer.
+  """
   id: ID!
-  createdAt: DateTime!
-  bookee: User!
-  place: Place!
-  startDate: DateTime!
-  endDate: DateTime!
-  payment: Payment!
+
+  """
+  The primary key used internally at Wave.
+  """
+  internalId: String
+    @deprecated(
+      reason: "Exposed internal IDs will eventually be removed in favor of global ID. Use Node.id instead."
+    )
+
+  """
+  Business that the customer belongs to.
+  """
+  business: Business!
+
+  """
+  Name or business name of the customer.
+  """
+  name: String
+
+  """
+  Address of the customer.
+  """
+  address: Address
+
+  """
+  First name of the principal contact.
+  """
+  firstName: String
+
+  """
+  Last name of the principal contact.
+  """
+  lastName: String
+
+  """
+  User defined id for the customer.
+  """
+  displayId: String
+
+  """
+  Email of the principal contact.
+  """
+  email: String
+
+  """
+  Mobile telephone number of the principal contact.
+  """
+  mobile: String
+
+  """
+  Telephone number of the customer.
+  """
+  phone: String
+
+  """
+  Fax number of the customer.
+  """
+  fax: String
+
+  """
+  Toll-free number of the customer.
+  """
+  tollFree: String
+
+  """
+  Website address of the customer.
+  """
+  website: String
+
+  """
+  Default currency used by the customer.
+  """
+  currency: Currency
+
+  """
+  Details for shipping to the customer.
+  """
+  shippingDetails: CustomerShippingDetails
+
+  """
+  When the customer was created.
+  """
+  createdAt: DateTime
+
+  """
+  When the customer was last modified.
+  """
+  modifiedAt: DateTime
 }
 
-type Notification {
-  createdAt: DateTime!
+"""
+Customer connection.
+"""
+type CustomerConnection {
+  """
+  List of customers.
+  """
+  edges: [CustomerEdge!]
+
+  """
+  Information about pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Customer edge.
+"""
+type CustomerEdge {
+  """
+  A customer.
+  """
+  node: Customer
+}
+
+"""
+Shipping details related to a customer.
+"""
+type CustomerShippingDetails {
+  """
+  Name or business name of the customer.
+  """
+  name: String
+
+  """
+  Address of the customer.
+  """
+  address: Address
+
+  """
+  Telephone number of the customer.
+  """
+  phone: String
+
+  """
+  Delivery instructions for handling.
+  """
+  instructions: String
+}
+
+"""
+ISO-8601 date object. Format returned will follow 'YYYY-MM-DD'.
+"""
+scalar Date
+
+"""
+ISO-8601 date and time object. Format returned will follow 'YYYY-MM-DDThh:mm:ssZ' where the timezone is UTC.
+"""
+scalar DateTime
+
+"""
+Input for deleting a Business invite
+"""
+input DeleteBusinessInvitationInput {
+  """
+  Invitation key to be deleted
+  """
+  businessInvitationId: ID!
+}
+
+"""
+Confirmation object received after deleting a business invite
+"""
+type DeleteBusinessInvitationOutput {
+  """
+  Boolean indicator of success.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+}
+
+"""
+Mutation validation error.
+"""
+type InputError {
+  """
+  Path to the input value.
+  """
+  path: [String!]
+
+  """
+  Error message.
+  """
+  message: String
+
+  """
+  Error code.
+  """
+  code: String
+}
+
+"""
+The schema’s entry point for mutations.
+"""
+type Mutation {
+  """
+  Create a business.
+  """
+  createBusiness(input: CreateBusinessInput): CreateBusinessOutput
+
+  """
+  Invite a user to join a business.
+  """
+  createBusinessInvitation(
+    input: CreateBusinessInvitationInput
+  ): CreateBusinessInvitationOutput
+
+  """
+  Delete a business invitation.
+  """
+  deleteBusinessInvitation(
+    input: DeleteBusinessInvitationInput
+  ): DeleteBusinessInvitationOutput
+
+  """
+  Update a user's business permission.
+  """
+  updateBusinessPermission(
+    input: UpdateBusinessPermissionInput
+  ): UpdateBusinessPermissionOutput
+
+  """
+  Remove business permission from a user.
+  """
+  removeBusinessPermission(
+    input: RemoveBusinessPermissionInput
+  ): RemoveBusinessPermissionOutput
+
+  """
+  Create a money transaction.
+  """
+  createMoneyDepositTransaction(
+    input: CreateMoneyDepositTransactionInput
+  ): CreateMoneyDepositTransactionOutput
+    @deprecated(reason: "Not available for public use at this time.")
+
+  """
+  Create a general journal transaction.
+  """
+  createGeneralJournalTransaction(
+    input: CreateGeneralJournalTransactionInput
+  ): CreateGeneralJournalTransactionOutput
+
+  """
+  Resend business invitation
+  """
+  resendBusinessInvitation(
+    input: ResendBusinessInvitationInput
+  ): ResendBusinessInvitationOutput
+
+  """
+  Update business invitation
+  """
+  updateBusinessInvitation(
+    input: UpdateBusinessInvitationInput
+  ): UpdateBusinessInvitationOutput
+}
+
+"""
+An object with an ID.
+"""
+interface Node {
+  """
+  ID of the object.
+  """
   id: ID!
-  link: String!
-  readDate: DateTime!
-  type: NOTIFICATION_TYPE
-  user: User!
 }
 
-type Payment {
-  booking: Booking!
-  createdAt: DateTime!
-  id: ID!
-  paymentMethod: PaymentAccount!
-  serviceFee: Float!
+"""
+Forms of business ownership.
+"""
+enum OrganizationalType {
+  """
+  Corporation
+  """
+  CORPORATION
+
+  """
+  Partnership
+  """
+  PARTNERSHIP
+
+  """
+  Sole Proprietorship
+  """
+  SOLE_PROPRIETORSHIP
 }
 
-type PaypalInformation {
-  createdAt: DateTime!
-  email: String!
-  id: ID!
-  paymentAccount: PaymentAccount!
+"""
+Information about pagination in a connection.
+"""
+type PageInfo {
+  """
+  Current page number.
+  """
+  currentPage: Int
+
+  """
+  Total number of pages in the connection.
+  """
+  totalPages: Int
+
+  """
+  Total number of nodes in the connection.
+  """
+  totalCount: Int
 }
 
-type CreditCardInformation {
-  cardNumber: String!
-  country: String!
-  createdAt: DateTime!
-  expiresOnMonth: Int!
-  expiresOnYear: Int!
+"""
+A State/County/Province/Region.
+"""
+type Province {
+  """
+  Informal name for identification.
+  """
+  slug: String @deprecated(reason: "Nonstandard values. Use code instead.")
+
+  """
+  ISO 3166-2 identifier.
+  """
+  code: String
+
+  """
+  Plain-lanuage representaton.
+  """
+  name: String
+}
+
+"""
+The schema’s entry point for queries.
+"""
+type Query {
+  """
+  List types of accounts.
+  """
+  accountTypes: [AccountType!]
+
+  """
+  List subtypes of accounts.
+  """
+  accountSubtypes: [AccountSubtype!]
+
+  """
+  List businesses.
+  """
+  businesses(page: Int = 1, pageSize: Int = 10): BusinessConnection
+
+  """
+  Get a business.
+  - If "id" is defined, it will fetch that business.
+  - If "id" is not defined and the access token is restricted to a single business, it will fetch that business.
+  - If "id" is not defined and the access token can access multiple businesses, it will fetch the user's default business.
+  """
+  business(id: ID): Business
+
+  """
+  Get the different types of business.
+  """
+  businessTypes: [BusinessType!]
+
+  """
+  Get the different subtypes of business.
+  """
+  businessSubtypes: [BusinessSubtype!]
+
+  """
+  List countries.
+  """
+  countries: [Country]
+
+  """
+  Get a country.
+  """
+  country(code: CountryCode!): Country
+
+  """
+  List currencies.
+  """
+  currencies: [Currency]
+
+  """
+  Get a currency.
+  """
+  currency(code: CurrencyCode!): Currency
+
+  """
+  The currently authenticated user.
+  """
+  me: User @deprecated(reason: "Use 'user' instead of 'me'.")
+
+  """
+  The currently authenticated user.
+  """
+  user: User
+}
+
+"""
+Input to the removeBusinessPermission mutation.
+"""
+input RemoveBusinessPermissionInput {
+  """
+  Id of the business.
+  """
+  businessId: String!
+
+  """
+  The id of the user to remove permissions on the business.
+  """
+  userId: String!
+}
+
+"""
+Output to the removeBusinessPermission mutation.
+"""
+type RemoveBusinessPermissionOutput {
+  """
+  Boolean indicator of success.
+  """
+  didSucceed: Boolean!
+}
+
+"""
+Input to resend an invitation to join a business.
+"""
+input ResendBusinessInvitationInput {
+  """
+  The id of the invitation to resend
+  """
+  businessInvitationId: ID!
+
+  """
+  The subject of the email.
+  """
+  emailSubject: String
+
+  """
+  The message to send in the invite.
+  """
+  emailMessage: String
+}
+
+"""
+Ouput from resending an invitation.
+"""
+type ResendBusinessInvitationOutput {
+  """
+  Boolean indicator of success.
+  """
+  didSucceed: Boolean!
+
+  """
+  Invitation object that was resent.
+  """
+  invitation: BusinessInvitation
+}
+
+"""
+Represents the origin of a transaction.
+"""
+enum TransactionOrigin {
+  """
+  Manually created transaction.
+  """
+  MANUAL
+
+  """
+  Transaction created through Zapier.
+  """
+  ZAPIER
+}
+
+"""
+Input to update an existing business invitation.
+"""
+input UpdateBusinessInvitationInput {
+  """
+  The id of the invitation to update
+  """
+  businessInvitationId: ID!
+
+  """
+  The permission to update to
+  """
+  permission: BusinessPermission!
+
+  """
+  The first name to update to.
+  """
   firstName: String!
-  id: ID!
+
+  """
+  The last name to update to.
+  """
   lastName: String!
-  paymentAccount: PaymentAccount
-  postalCode: String!
-  securityCode: String!
+
+  """
+  The job title to update to.
+  """
+  jobTitle: String!
 }
 
-type Message {
-  createdAt: DateTime!
-  deliveredAt: DateTime!
-  id: ID!
-  readAt: DateTime!
+"""
+Ouput from updating an invitation.
+"""
+type UpdateBusinessInvitationOutput {
+  """
+  Boolean indicator of success.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
+
+  """
+  Invitation object that was created.
+  """
+  invitation: BusinessInvitation
 }
 
-type Pricing {
-  averageMonthly: Int!
-  averageWeekly: Int!
-  basePrice: Int!
-  cleaningFee: Int
-  currency: CURRENCY
-  extraGuests: Int
-  id: ID!
-  monthlyDiscount: Int
-  perNight: Int!
-  securityDeposit: Int
-  smartPricing: Boolean!
-  weekendPricing: Int
-  weeklyDiscount: Int
+"""
+Input to the updateBusinessPermission mutation.
+"""
+input UpdateBusinessPermissionInput {
+  """
+  The unique identifier for the user.
+  """
+  userId: ID!
+
+  """
+  The unique identifier for the business.
+  """
+  businessId: ID!
+
+  """
+  The permission granted to the user.
+  """
+  permission: BusinessPermission!
+
+  """
+  The job title of the user.
+  """
+  jobTitle: String
 }
 
-type PlaceViews {
-  id: ID!
-  lastWeek: Int!
+"""
+Output to the updateBusinessPermission mutation.
+"""
+type UpdateBusinessPermissionOutput {
+  """
+  Indicates whether the business permission was successfully updated.
+  """
+  didSucceed: Boolean!
+
+  """
+  Mutation validation errors.
+  """
+  inputErrors: [InputError!]
 }
 
-type GuestRequirements {
-  govIssuedId: Boolean!
-  guestTripInformation: Boolean!
+"""
+A user is an individual's account.
+"""
+type User implements Node {
+  """
+  The unique identifier for the user.
+  """
   id: ID!
-  recommendationsFromOtherHosts: Boolean!
+
+  """
+  The primary key used internally at Wave.
+  """
+  internalId: String
+    @deprecated(
+      reason: "Exposed internal IDs will eventually be removed in favor of global ID. Use Node.id instead."
+    )
+
+  """
+  The user's primary email address.
+  """
+  defaultEmail: String
+
+  """
+  All emails belonging to the user.
+  """
+  emails: [UserEmail!]
+
+  """
+  The user's first name.
+  """
+  firstName: String
+
+  """
+  The user's last name.
+  """
+  lastName: String
+
+  """
+  Set of capabilities the user has.
+  """
+  groups: [String!]
+
+  """
+  When the user last logged in.
+  """
+  lastLoginAt: DateTime
+
+  """
+  When the user was created.
+  """
+  createdAt: DateTime
+
+  """
+  When the user was last modified.
+  """
+  modifiedAt: DateTime
 }
 
-type Policies {
-  checkInEndTime: Float!
-  checkInStartTime: Float!
-  checkoutTime: Float!
-  createdAt: DateTime!
-  id: ID!
-  updatedAt: DateTime!
+"""
+User connection.
+"""
+type UserConnection {
+  """
+  List of users of the business.
+  """
+  edges: [UserEdge!]
 }
 
-type HouseRules {
-  additionalRules: String
-  createdAt: DateTime!
-  id: ID!
-  partiesAndEventsAllowed: Boolean
-  petsAllowed: Boolean
-  smokingAllowed: Boolean
-  suitableForChildren: Boolean
-  suitableForInfants: Boolean
-  updatedAt: DateTime!
+"""
+User edge.
+"""
+type UserEdge {
+  """
+  A user that has access to the business.
+  """
+  node: User
+
+  """
+  The permssion the user has.
+  """
+  permission: String
+
+  """
+  The job title the user has.
+  """
+  jobTitle: String
 }
 
-type Amenities {
-  airConditioning: Boolean!
-  babyBath: Boolean!
-  babyMonitor: Boolean!
-  babysitterRecommendations: Boolean!
-  bathtub: Boolean!
-  breakfast: Boolean!
-  buzzerWirelessIntercom: Boolean!
-  cableTv: Boolean!
-  changingTable: Boolean!
-  childrensBooksAndToys: Boolean!
-  childrensDinnerware: Boolean!
-  crib: Boolean!
-  doorman: Boolean!
-  dryer: Boolean!
-  elevator: Boolean!
-  essentials: Boolean!
-  familyKidFriendly: Boolean!
-  freeParkingOnPremises: Boolean!
-  freeParkingOnStreet: Boolean!
-  gym: Boolean!
-  hairDryer: Boolean!
-  hangers: Boolean!
-  heating: Boolean!
-  hotTub: Boolean!
-  id: ID!
-  indoorFireplace: Boolean!
-  internet: Boolean!
-  iron: Boolean!
-  kitchen: Boolean!
-  laptopFriendlyWorkspace: Boolean!
-  paidParkingOffPremises: Boolean!
-  petsAllowed: Boolean!
-  pool: Boolean!
-  privateEntrance: Boolean!
-  shampoo: Boolean!
-  smokingAllowed: Boolean!
-  suitableForEvents: Boolean!
-  tv: Boolean!
-  washer: Boolean!
-  wheelchairAccessible: Boolean!
-  wirelessInternet: Boolean!
+"""
+An email associated with a user.
+"""
+type UserEmail {
+  """
+  Is the email the user's preferred address to be contacted at.
+  """
+  isDefault: Boolean
+
+  """
+  Has the email been confirmed to belong to the user.
+  """
+  isVerified: Boolean
+
+  """
+  The email address.
+  """
+  email: String
 }
