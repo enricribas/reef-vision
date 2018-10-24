@@ -12,6 +12,9 @@
     "resolver-codegen": "npm-run-all resolver-interfaces resolver-scaffold"
   },
   "dependencies": {
+    "@types/aws-lambda": "^8.10.14",
+    "@types/prettier": "^1.13.2",
+    "@types/ws": "^6.0.1",
     "bcryptjs": "2.4.3",
     "graphql": "^14.0.2",
     "graphql-tag": "2.10.0",
